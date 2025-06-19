@@ -1,0 +1,19 @@
+{
+  "name": "attendance-app",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "tauri": "tauri dev",
+    "test": "echo no tests"
+  },
+  "dependencies": {
+    "solid-js": "^1.8.0",
+    "@tauri-apps/api": "^1.6.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "vite-plugin-solid": "^2.7.0",
+    "typescript": "^5.0.0"
+  }
+}
