@@ -1,18 +1,7 @@
-# 出席簿アプリ
+# Tauri + Solid + Typescript
 
-Tauri と Solid.js、Node.js を用いた出席簿アプリケーションです。CSV ファイルを読み込んで出席データを管理します。データは SQLite に格納され、学年ごとにフィルタリングしたり、名前ごとに出席日を確認することができます。
+This template should help get you started developing with Tauri, Solid and Typescript in Vite.
 
-## 使い方
+## Recommended IDE Setup
 
-1. `npm install` でフロントエンドの依存関係をインストールします。
-2. `cargo tauri dev` で開発サーバを起動します。
-3. アプリ上部のファイル選択から CSV を読み込むとデータが保存されます。
-4. 学年を入力するとその学年のデータだけが表示されます。
-
-CSV は `名前,日付,学年` の形式であることを想定しています。
-
-## 技術スタック
-- Tauri
-- Solid.js
-- Node.js
-- SQLite
+- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)

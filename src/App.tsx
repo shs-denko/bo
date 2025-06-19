@@ -1,61 +1,51 @@
-import { createSignal, For } from 'solid-js';
-import { readTextFile } from '@tauri-apps/api/fs';
-import { invoke } from '@tauri-apps/api/tauri';
+import { createSignal } from "solid-js";
+import logo from "./assets/logo.svg";
+import { invoke } from "@tauri-apps/api/core";
+import "./App.css";
 
-interface Attendance {
-  name: string;
-  date: string;
-  grade: string;
-}
+function App() {
+  const [greetMsg, setGreetMsg] = createSignal("");
+  const [name, setName] = createSignal("");
 
-export default function App() {
-  const [grade, setGrade] = createSignal<string>('');
-  const [records, setRecords] = createSignal<Attendance[]>([]);
-
-  const loadFile = async (path: string) => {
-    const contents = await readTextFile(path);
-    await invoke('load_csv', { csv: contents });
-    const all: Attendance[] = await invoke('list_attendance', { grade: grade() || null });
-    setRecords(all);
-  };
-
-  const handleGradeChange = async (g: string) => {
-    setGrade(g);
-    const all: Attendance[] = await invoke('list_attendance', { grade: g || null });
-    setRecords(all);
-  };
+  async function greet() {
+    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+    setGreetMsg(await invoke("greet", { name: name() }));
+  }
 
   return (
-    <main>
-      <h1>Attendance Book</h1>
-      <input type="file" onChange={e => {
-        const files = e.currentTarget.files;
-        if (files && files[0]) {
-          loadFile(files[0].path);
-        }
-      }} />
-      <div>
-        <label>Grade: </label>
-        <input value={grade()} onInput={e => handleGradeChange(e.currentTarget.value)} />
+    <main class="container">
+      <h1>Welcome to Tauri + Solid</h1>
+
+      <div class="row">
+        <a href="https://vitejs.dev" target="_blank">
+          <img src="/vite.svg" class="logo vite" alt="Vite logo" />
+        </a>
+        <a href="https://tauri.app" target="_blank">
+          <img src="/tauri.svg" class="logo tauri" alt="Tauri logo" />
+        </a>
+        <a href="https://solidjs.com" target="_blank">
+          <img src={logo} class="logo solid" alt="Solid logo" />
+        </a>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Date</th>
-            <th>Grade</th>
-          </tr>
-        </thead>
-        <tbody>
-          <For each={records()}>{r => (
-            <tr>
-              <td>{r.name}</td>
-              <td>{r.date}</td>
-              <td>{r.grade}</td>
-            </tr>
-          )}</For>
-        </tbody>
-      </table>
+      <p>Click on the Tauri, Vite, and Solid logos to learn more.</p>
+
+      <form
+        class="row"
+        onSubmit={(e) => {
+          e.preventDefault();
+          greet();
+        }}
+      >
+        <input
+          id="greet-input"
+          onChange={(e) => setName(e.currentTarget.value)}
+          placeholder="Enter a name..."
+        />
+        <button type="submit">Greet</button>
+      </form>
+      <p>{greetMsg()}</p>
     </main>
   );
 }
+
+export default App;
