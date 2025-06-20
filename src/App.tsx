@@ -1,6 +1,6 @@
 import { createSignal, For } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/api/dialog";
+import { open } from "@tauri-apps/plugin-dialog";
 import { readTextFile } from "@tauri-apps/api/fs";
 import "./App.css";
 
