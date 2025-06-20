@@ -1,6 +1,7 @@
 import { createSignal, For } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
 // Use the dialog plugin directly via `invoke` so no JS dependency is required
+
 import { readTextFile } from "@tauri-apps/api/fs";
 import "./App.css";
 
