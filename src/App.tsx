@@ -1,6 +1,6 @@
 import { createSignal, For } from "solid-js";
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/api/dialog";
+// Use the dialog plugin directly via `invoke` so no JS dependency is required
 import { readTextFile } from "@tauri-apps/api/fs";
 import "./App.css";
 
@@ -10,6 +10,11 @@ interface AttendanceRecord {
   grade: number;
 }
 
+async function dialogOpen(options: unknown) {
+  // call the dialog plugin command via the Tauri core invoke API
+  return invoke<string | null>("plugin:dialog|open", { options });
+}
+
 function App() {
   const [grade, setGrade] = createSignal("");
   const [gradeData, setGradeData] = createSignal<AttendanceRecord[]>([]);
@@ -17,7 +22,7 @@ function App() {
   const [dates, setDates] = createSignal<string[]>([]);
 
   async function loadCsv() {
-    const selected = await open({ filters: [{ name: "CSV", extensions: ["csv"] }] });
+    const selected = await dialogOpen({ filters: [{ name: "CSV", extensions: ["csv"] }] });
     if (!selected || Array.isArray(selected)) return;
     const content = await readTextFile(selected as string);
     await invoke("load_csv", { content });
