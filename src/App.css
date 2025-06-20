@@ -48,6 +48,72 @@ body {
   min-height: 100vh;
 }
 
+/* Attendance Matrix Styles */
+.attendance-matrix {
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+}
+
+.attendance-matrix table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 600px;
+  background: var(--bg-secondary);
+}
+
+.attendance-matrix th {
+  border: 1px solid var(--border-light);
+  padding: 12px 8px;
+  background: #f8fafc;
+  font-weight: 600;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.attendance-matrix th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #f1f5f9;
+  font-weight: 700;
+  text-align: left;
+}
+
+.attendance-matrix td {
+  border: 1px solid var(--border-light);
+  padding: 8px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.attendance-matrix td:first-child {
+  position: sticky;
+  left: 0;
+  background: #f9fafb;
+  z-index: 5;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.attendance-matrix input[type="checkbox"] {
+  transform: scale(1.3);
+  cursor: pointer;
+  accent-color: var(--btn-success);
+}
+
+.attendance-matrix tr:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.attendance-matrix tr:hover td:first-child {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
 /* Main App Layout */
 .app {
   min-height: 100vh;
