@@ -1,8 +1,8 @@
 use csv::ReaderBuilder;
 use rusqlite::{params, Connection};
-use std::path::PathBuf;
-use tauri::api::path::app_local_data_dir;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use tauri::{AppHandle, Manager};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct AttendanceRecord {
@@ -11,10 +11,11 @@ struct AttendanceRecord {
     grade: i64,
 }
 
-fn db_path() -> PathBuf {
-    let mut dir = app_local_data_dir().unwrap_or_else(|| {
-        std::env::current_dir().expect("failed to get current directory")
-    });
+fn db_path(app: &AppHandle) -> PathBuf {
+    let mut dir = app
+        .path()
+        .app_local_data_dir()
+        .unwrap_or_else(|_| std::env::current_dir().expect("failed to get current directory"));
     if let Err(e) = std::fs::create_dir_all(&dir) {
         eprintln!("failed to create data directory: {}", e);
     }
@@ -28,23 +29,23 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn load_csv(content: String) -> Result<(), String> {
+fn load_csv(app: AppHandle, content: String) -> Result<(), String> {
     println!("Loading CSV content: {}", content);
     let mut reader = ReaderBuilder::new()
-        .has_headers(true)  // ヘッダー行を正しく処理
+        .has_headers(true) // ヘッダー行を正しく処理
         .from_reader(content.as_bytes());
-    let conn = Connection::open(db_path()).map_err(|e| e.to_string())?;
-    
+    let conn = Connection::open(db_path(&app)).map_err(|e| e.to_string())?;
+
     // Clear existing data
     conn.execute("DROP TABLE IF EXISTS attendance", [])
         .map_err(|e| e.to_string())?;
-    
+
     conn.execute(
         "CREATE TABLE attendance (name TEXT, date TEXT, grade INTEGER)",
         [],
     )
     .map_err(|e| e.to_string())?;
-    
+
     let mut record_count = 0;
     for result in reader.records() {
         let record = result.map_err(|e| e.to_string())?;
@@ -52,38 +53,41 @@ fn load_csv(content: String) -> Result<(), String> {
             println!("Skipping incomplete record: {:?}", record);
             continue;
         }
-        
+
         let name = record.get(0).ok_or("missing name")?.trim();
         let date = record.get(1).ok_or("missing date")?.trim();
         let grade_str = record.get(2).ok_or("missing grade")?.trim();
-        
+
         // 空の値をスキップ
         if name.is_empty() || date.is_empty() || grade_str.is_empty() {
-            println!("Skipping empty record: name={}, date={}, grade={}", name, date, grade_str);
+            println!(
+                "Skipping empty record: name={}, date={}, grade={}",
+                name, date, grade_str
+            );
             continue;
         }
-        
+
         let grade: i64 = grade_str
             .parse()
             .map_err(|_| format!("invalid grade: {}", grade_str))?;
-            
+
         conn.execute(
             "INSERT INTO attendance (name, date, grade) VALUES (?1, ?2, ?3)",
             params![name, date, grade],
         )
         .map_err(|e| e.to_string())?;
-        
+
         record_count += 1;
         println!("Inserted record: {} - {} - {}", name, date, grade);
     }
-    
+
     println!("Total records inserted: {}", record_count);
     Ok(())
 }
 
 #[tauri::command]
-fn get_by_grade(grade: i64) -> Result<Vec<AttendanceRecord>, String> {
-    let conn = Connection::open(db_path()).map_err(|e| e.to_string())?;
+fn get_by_grade(app: AppHandle, grade: i64) -> Result<Vec<AttendanceRecord>, String> {
+    let conn = Connection::open(db_path(&app)).map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT name, date, grade FROM attendance WHERE grade = ?1")
         .map_err(|e| e.to_string())?;
@@ -104,9 +108,9 @@ fn get_by_grade(grade: i64) -> Result<Vec<AttendanceRecord>, String> {
 }
 
 #[tauri::command]
-fn get_all_data() -> Result<Vec<AttendanceRecord>, String> {
+fn get_all_data(app: AppHandle) -> Result<Vec<AttendanceRecord>, String> {
     println!("Getting all data from database");
-    let conn = Connection::open(db_path()).map_err(|e| e.to_string())?;
+    let conn = Connection::open(db_path(&app)).map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT name, date, grade FROM attendance ORDER BY name, date")
         .map_err(|e| e.to_string())?;
@@ -128,32 +132,32 @@ fn get_all_data() -> Result<Vec<AttendanceRecord>, String> {
 }
 
 #[tauri::command]
-fn add_record(record: AttendanceRecord) -> Result<(), String> {
+fn add_record(app: AppHandle, record: AttendanceRecord) -> Result<(), String> {
     println!("Adding record: {:?}", record);
-    let conn = Connection::open(db_path()).map_err(|e| e.to_string())?;
+    let conn = Connection::open(db_path(&app)).map_err(|e| e.to_string())?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS attendance (name TEXT, date TEXT, grade INTEGER)",
         [],
     )
     .map_err(|e| e.to_string())?;
-    
+
     conn.execute(
         "INSERT INTO attendance (name, date, grade) VALUES (?1, ?2, ?3)",
         params![record.name, record.date, record.grade],
     )
     .map_err(|e| e.to_string())?;
-    
+
     println!("Record added successfully");
     Ok(())
 }
 
 #[tauri::command]
-fn export_csv() -> Result<String, String> {
-    let conn = Connection::open(db_path()).map_err(|e| e.to_string())?;
+fn export_csv(app: AppHandle) -> Result<String, String> {
+    let conn = Connection::open(db_path(&app)).map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT name, date, grade FROM attendance ORDER BY name, date")
         .map_err(|e| e.to_string())?;
-    
+
     let iter = stmt
         .query_map([], |row| {
             Ok(AttendanceRecord {
@@ -163,13 +167,13 @@ fn export_csv() -> Result<String, String> {
             })
         })
         .map_err(|e| e.to_string())?;
-    
+
     let mut csv_content = String::from("name,date,grade\n");
     for record in iter {
         let r = record.map_err(|e| e.to_string())?;
         csv_content.push_str(&format!("{},{},{}\n", r.name, r.date, r.grade));
     }
-    
+
     Ok(csv_content)
 }
 
